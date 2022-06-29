@@ -1,6 +1,6 @@
 package org.kaczucha.service;
 
-import org.kaczucha.Client;
+import org.kaczucha.repository.entity.Client;
 import org.kaczucha.repository.ClientRepository;
 
 import java.util.Objects;
@@ -37,6 +37,8 @@ public class BankService {
         } else {
             throw new NoSufficientFundsException("Not enough funds!");
         }
+        clientRepository.save(fromClient);
+        clientRepository.save(toClient);
     }
 
     public void withdraw(
@@ -53,6 +55,7 @@ public class BankService {
         }
         final double newBalance = client.getBalance() - amount;
         client.setBalance(newBalance);
+        clientRepository.save(client);
 
     }
 

@@ -1,25 +1,23 @@
 package org.kaczucha.service;
 
-import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.kaczucha.Client;
-import org.kaczucha.repository.InMemoryClientRepository;
+import org.kaczucha.repository.ClientRepository;
+import org.kaczucha.repository.entity.Account;
+import org.kaczucha.repository.entity.Client;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.NoSuchElementException;
+import static java.util.Collections.singletonList;
+import static org.mockito.Mockito.*;
 
 public class BankServiceTest {
     private BankService service;
-    private List<Client> clients;
-
+    private ClientRepository repository;
 
     @BeforeEach
     public void setup() {
-        clients = new LinkedList<>();
-        service = new BankService(new InMemoryClientRepository(clients));
+        repository = mock(ClientRepository.class);
+        service = new BankService(repository);
     }
 
     @Test
@@ -27,27 +25,36 @@ public class BankServiceTest {
         //given
         final String emailFrom = "a@a.pl";
         final String emailTo = "b@b.pl";
-        final Client clientFrom = new Client("Alek", emailFrom, 1000);
-        final Client clientTo = new Client("Bartek", emailTo, 500);
-        clients.add(clientFrom);
-        clients.add(clientTo);
+
+        final Client clientFrom = new Client(
+                "Alek",
+                emailFrom,
+                singletonList(new Account(1000, "PLN"))
+        );
+        final Client clientTo = new Client(
+                "Bartek",
+                emailTo,
+                singletonList(new Account(500, "PLN"))
+        );
+
         final double amount = 100;
+        when(repository.findByEmail(emailFrom)).thenReturn(clientFrom);
+        when(repository.findByEmail(emailTo)).thenReturn(clientTo);
         //when
         service.transfer(emailFrom, emailTo, amount);
         //then
-        final Client actualFromClient = service.findByEmail(emailFrom);
-        final Client actualToClient = service.findByEmail(emailTo);
-        final Client expectedClientFrom = new Client("Alek", emailFrom, 900);
-        final Client expectedClientTo = new Client("Bartek", emailTo, 600);
-
-        final SoftAssertions softAssertions = new SoftAssertions();
-        softAssertions
-                .assertThat(expectedClientFrom)
-                .isEqualTo(actualFromClient);
-        softAssertions
-                .assertThat(expectedClientTo)
-                .isEqualTo(actualToClient);
-        softAssertions.assertAll();
+        final Client expectedClientFrom = new Client(
+                "Alek",
+                emailFrom,
+                singletonList(new Account(900, "PLN"))
+        );
+        final Client expectedClientTo = new Client(
+                "Bartek",
+                emailTo,
+                singletonList(new Account(600, "PLN"))
+        );
+        verify(repository).save(expectedClientFrom);
+        verify(repository).save(expectedClientTo);
     }
 
     @Test
@@ -55,27 +62,35 @@ public class BankServiceTest {
         // given
         final String emailFrom = "a@a.pl";
         final String emailTo = "b@b.pl";
-        final Client clientFrom = new Client("Alek", emailFrom, 1000);
-        final Client clientTo = new Client("Bartek", emailTo, 500);
-        clients.add(clientFrom);
-        clients.add(clientTo);
+
+        final Client clientFrom = new Client(
+                "Alek",
+                emailFrom,
+                singletonList(new Account(1000, "PLN"))
+        );
+        final Client clientTo = new Client(
+                "Bartek",
+                emailTo,
+                singletonList(new Account(500, "PLN")));
+
         final double amount = 1000;
         // when
+        when(repository.findByEmail(emailFrom)).thenReturn(clientFrom);
+        when(repository.findByEmail(emailTo)).thenReturn(clientTo);
         service.transfer(emailFrom, emailTo, amount);
         // then
-        final Client actualFromClient = service.findByEmail(emailFrom);
-        final Client actualToClient = service.findByEmail(emailTo);
-        final Client expectedClientFrom = new Client("Alek", emailFrom, 0);
-        final Client expectedClientTo = new Client("Bartek", emailTo, 1500);
+        final Client expectedClientFrom = new Client(
+                "Alek",
+                emailFrom,
+                singletonList(new Account(0, "PLN")));
+        final Client expectedClientTo = new Client(
+                "Bartek",
+                emailTo,
+                singletonList(new Account(1500, "PLN")));
 
-        SoftAssertions softAssertions = new SoftAssertions();
-        softAssertions
-                .assertThat(expectedClientFrom)
-                .isEqualTo(actualFromClient);
-        softAssertions
-                .assertThat(expectedClientTo)
-                .isEqualTo(actualToClient);
-        softAssertions.assertAll();
+        verify(repository).save(expectedClientFrom);
+        verify(repository).save(expectedClientTo);
+
     }
 
     @Test
@@ -83,11 +98,19 @@ public class BankServiceTest {
         // given
         final String emailFrom = "a@a.pl";
         final String emailTo = "b@b.pl";
-        final Client clientFrom = new Client("Alek", emailFrom, 100);
-        final Client clientTo = new Client("Bartek", emailTo, 500);
-        clients.add(clientFrom);
-        clients.add(clientTo);
+        final Client clientFrom = new Client(
+                "Alek",
+                emailFrom,
+                singletonList(new Account(100, "PLN"))
+        );
+        final Client clientTo = new Client(
+                "Bartek",
+                emailTo,
+                singletonList(new Account(500, "PLN"))
+        );
         final double amount = 1000;
+        when(repository.findByEmail(emailFrom)).thenReturn(clientFrom);
+        when(repository.findByEmail(emailTo)).thenReturn(clientTo);
         // when/then
         Assertions.assertThrows(
                 NoSufficientFundsException.class,
@@ -100,10 +123,6 @@ public class BankServiceTest {
         // given
         final String emailFrom = "a@a.pl";
         final String emailTo = "b@b.pl";
-        final Client clientFrom = new Client("Alek", emailFrom, 100);
-        final Client clientTo = new Client("Bartek", emailTo, 500);
-        clients.add(clientFrom);
-        clients.add(clientTo);
         final double amount = -1000;
         // when/then
         Assertions.assertThrows(
@@ -116,8 +135,6 @@ public class BankServiceTest {
     public void transfer_toSameClient_thrownException() {
         //given
         final String email = "a@a.pl";
-        final Client client = new Client("Alek", email, 100);
-        clients.add(client);
         // when/then
         Assertions.assertThrows(
                 IllegalArgumentException.class,
@@ -130,52 +147,71 @@ public class BankServiceTest {
     public void withdraw_correctAmount_balanceChangedCorrectly() {
         //given
         final String email = "a@a.pl";
-        final Client client = new Client("Alek", email, 100);
-        clients.add(client);
+        final Client client = new Client(
+                "Alek",
+                email,
+                singletonList(new Account(100, "PLN"))
+        );
+        when(repository.findByEmail(email)).thenReturn(client);
         //when
         service.withdraw(email, 50);
         //then
-        Client expectedClient = new Client("Alek", email, 50);
-        final Client actualClient = clients.get(0);
-        Assertions.assertEquals(expectedClient, actualClient);
+        Client expectedClient = new Client(
+                "Alek",
+                email,
+                singletonList(new Account(50, "PLN"))
+        );
+        verify(repository).save(expectedClient);
     }
 
     @Test
     public void withdraw_correctFloatingPointAmount_balanceChangedCorrectly() {
         //given
         final String email = "a@a.pl";
-        final Client client = new Client("Alek", email, 100);
-        clients.add(client);
+        final Client client = new Client(
+                "Alek",
+                email,
+                singletonList(new Account(100, "PLN"))
+        );
+        when(repository.findByEmail(email)).thenReturn(client);
         //when
         service.withdraw(email, 50.5);
         //then
-        Client expectedClient = new Client("Alek", email, 49.5);
-        final Client actualClient = clients.get(0);
-        Assertions.assertEquals(expectedClient, actualClient);
+        Client expectedClient = new Client(
+                "Alek",
+                email,
+                singletonList(new Account(49.5, "PLN"))
+        );
+        verify(repository).save(expectedClient);
     }
 
     @Test
     public void withdraw_allBalance_balanceSetToZero() {
         //given
         final String email = "a@a.pl";
-        final Client client = new Client("Alek", email, 100);
-        clients.add(client);
-        service.withdraw(email, 100);
+        final Client client = new Client(
+                "Alek",
+                email,
+                singletonList(new Account(100, "PLN"))
+        );
+        when(repository.findByEmail(email)).thenReturn(client);
         //when
+        service.withdraw(email, 100);
         //then
-        Client expectedClient = new Client("Alek", email, 0);
-        final Client actualClient = clients.get(0);
-        Assertions.assertEquals(expectedClient, actualClient);
+        Client expectedClient = new Client(
+                "Alek",
+                email,
+                singletonList(new Account(0, "PLN"))
+        );
+        verify(repository).save(expectedClient);
     }
 
     @Test
     public void withdraw_negativeAmount_throwsIllegalArgumentException() {
         //given
         final String email = "a@a.pl";
-        final Client client = new Client("Alek", email, 100);
-        clients.add(client);
         final int amount = -100;
-        //when
+        //when/then
         Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> service.withdraw(email, amount)
@@ -186,10 +222,8 @@ public class BankServiceTest {
     public void withdraw_zeroAmount_throwsIllegalArgumentException() {
         //given
         final String email = "a@a.pl";
-        final Client client = new Client("Alek", email, 100);
-        clients.add(client);
         final int amount = 0;
-        //when
+        //when/then
         Assertions.assertThrows(
                 IllegalArgumentException.class,
                 () -> service.withdraw(email, amount)
@@ -200,8 +234,12 @@ public class BankServiceTest {
     public void withdraw_amountBiggerThenBalance_throwsNoSufficientFundsException() {
         //given
         final String email = "a@a.pl";
-        final Client client = new Client("Alek", email, 100);
-        clients.add(client);
+        final Client client = new Client(
+                "Alek",
+                email,
+                singletonList(new Account(100, "PLN"))
+        );
+        when(repository.findByEmail(email)).thenReturn(client);
         final int amount = 1000;
         //when
         Assertions.assertThrows(
@@ -211,13 +249,14 @@ public class BankServiceTest {
     }
 
     @Test
-    public void withdraw_incorrectEmail_throwsNoSuchElementException() {
+    public void withdraw_incorrectEmail_throwsNullPointerException() {
         //given
         final String email = "incorrect_email@a.pl";
-        final int amount = 1000;
+        when(repository.findByEmail(email)).thenReturn(null);
+        final int amount = 80;
         //when/then
         Assertions.assertThrows(
-                NoSuchElementException.class,
+                NullPointerException.class,
                 () -> service.withdraw(email, amount)
         );
     }
@@ -227,14 +266,21 @@ public class BankServiceTest {
     public void withdraw_upperCaseEmail_balanceChangedCorrectly() {
         //given
         final String email = "A@A.PL";
-        final Client client = new Client("Alek", "a@a.pl", 100);
-        clients.add(client);
+        final Client client = new Client(
+                "Alek",
+                "a@a.pl",
+                singletonList(new Account(100, "PLN"))
+        );
+        when(repository.findByEmail("a@a.pl")).thenReturn(client);
         //when
         service.withdraw(email, 50);
         //then
-        Client expectedClient = new Client("Alek", "a@a.pl", 50);
-        final Client actualClient = clients.get(0);
-        Assertions.assertEquals(expectedClient, actualClient);
+        Client expectedClient = new Client(
+                "Alek",
+                "a@a.pl",
+                singletonList(new Account(50,"PLN"))
+                );
+        verify(repository).save(expectedClient);
     }
 
     @Test

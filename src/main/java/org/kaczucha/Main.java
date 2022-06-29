@@ -1,10 +1,11 @@
 package org.kaczucha;
 
-import org.kaczucha.repository.InMemoryClientRepository;
+import org.kaczucha.repository.HibernateClientRepository;
+import org.kaczucha.repository.entity.Account;
+import org.kaczucha.repository.entity.Client;
 import org.kaczucha.service.BankService;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -15,7 +16,7 @@ public class Main {
     }
 
     public void run() {
-        final InMemoryClientRepository repository = new InMemoryClientRepository(new ArrayList<>());
+        final HibernateClientRepository repository = new HibernateClientRepository();
         bankService = new BankService(repository);
 
         try (Scanner scanner = new Scanner(System.in)) {
@@ -51,6 +52,8 @@ public class Main {
         final String mail = scanner.next();
         System.out.println("Enter balance:");
         final double balance = scanner.nextDouble();
-        bankService.save(new Client(name, mail, balance));
+        final Account account = new Account(balance, "PLN");
+        final List<Account> accounts = List.of(account);
+        bankService.save(new Client(name, mail, accounts));
     }
 }
