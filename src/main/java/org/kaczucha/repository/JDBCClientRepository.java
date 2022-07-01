@@ -1,19 +1,33 @@
 package org.kaczucha.repository;
 
+import org.kaczucha.repository.annotation.InMemoryRepository;
+import org.kaczucha.repository.annotation.JdbcRepository;
 import org.kaczucha.repository.entity.Client;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Repository;
 
 import java.sql.*;
 
-public class JDBCClientRepository implements ClientRepository{
-    public static final String USER = "postgres";
-    public static final String PASSWORD = "Lina18061988";
-    public static final String JDBC_URL = "jdbc:postgresql://localhost:5432/test";
+@Repository
+@JdbcRepository
+public class JDBCClientRepository implements ClientRepository {
+    public final String user;
+    public final String password;
+    public final String jdbcUrl;
 
-
+    public JDBCClientRepository(
+            @Value("${jdbc.user}") String user,
+            @Value("${jdbc.password}") String password,
+            @Value("${jdbc.url}") String jdbcUrl
+    ) {
+        this.user = user;
+        this.password = password;
+        this.jdbcUrl = jdbcUrl;
+    }
 
     @Override
     public void save(Client client) {
-        try(Connection connection = DriverManager.getConnection(JDBC_URL, USER, PASSWORD)) {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, user, password)) {
             final String name = client.getName();
             final String email = client.getEmail();
             final PreparedStatement statement
@@ -29,11 +43,11 @@ public class JDBCClientRepository implements ClientRepository{
 
     @Override
     public Client findByEmail(String email) {
-        try(Connection connection = DriverManager.getConnection(JDBC_URL,USER,PASSWORD)) {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl, user, password)) {
             final PreparedStatement statement = connection.prepareStatement("SELECT FIRST_NAME,MAIL FROM USERS WHERE MAIL = ?");
-            statement.setString(1,email);
+            statement.setString(1, email);
             final ResultSet resultSet = statement.executeQuery();
-            if (resultSet.next()){
+            if (resultSet.next()) {
                 final String name = resultSet.getString("FIRST_NAME");
                 final String mail = resultSet.getString("MAIL");
                 return new Client(name, mail, null);

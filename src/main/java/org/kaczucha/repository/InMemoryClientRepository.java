@@ -1,6 +1,8 @@
 package org.kaczucha.repository;
 
+import org.kaczucha.repository.annotation.InMemoryRepository;
 import org.kaczucha.repository.entity.Client;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.NoSuchElementException;

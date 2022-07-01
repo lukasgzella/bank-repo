@@ -2,8 +2,13 @@ package org.kaczucha.repository;
 
 import org.hibernate.Session;
 import org.hibernate.query.Query;
+import org.kaczucha.repository.annotation.HibernateRepository;
 import org.kaczucha.repository.entity.Client;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Repository;
 
+@Repository
+@HibernateRepository
 public class HibernateClientRepository implements ClientRepository {
     @Override
     public void save(Client client) {
