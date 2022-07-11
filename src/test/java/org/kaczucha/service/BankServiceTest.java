@@ -3,7 +3,7 @@ package org.kaczucha.service;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.kaczucha.repository.ClientRepository;
+import org.kaczucha.repository.ClientSpringJpaRepository;
 import org.kaczucha.repository.entity.Account;
 import org.kaczucha.repository.entity.Client;
 
@@ -12,11 +12,11 @@ import static org.mockito.Mockito.*;
 
 public class BankServiceTest {
     private BankService service;
-    private ClientRepository repository;
+    private ClientSpringJpaRepository repository;
 
     @BeforeEach
     public void setup() {
-        repository = mock(ClientRepository.class);
+        repository = mock(ClientSpringJpaRepository.class);
         service = new BankService(repository);
     }
 

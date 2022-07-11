@@ -2,3 +2,11 @@ jdbc:
   url: "jdbc:postgresql://localhost:5432/test"
   user: "postgres"
   password: "Lina18061988"
+
+
+
+spring:
+    username: "postgres"
+    password: "Lina18061988"
+    url: "jdbc:postgresql://localhost:5432/test"
+    driver-class: "org.postgresql.Driver"
