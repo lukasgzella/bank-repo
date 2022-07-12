@@ -19,6 +19,8 @@ public class Account {
     private double balance;
     @Column(name = "CURRENCY")
     private String currency;
+    @Column(name = "USER_ID")
+    private Long userId;
 
     public Account(double balance, String currency) {
         this.balance = balance;
