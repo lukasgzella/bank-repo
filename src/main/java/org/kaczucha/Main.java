@@ -1,6 +1,5 @@
 package org.kaczucha;
 
-import org.kaczucha.repository.HibernateClientRepository;
 import org.kaczucha.repository.entity.Account;
 import org.kaczucha.repository.entity.Client;
 import org.kaczucha.service.BankService;
